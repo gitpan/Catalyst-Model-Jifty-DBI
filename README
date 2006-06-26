@@ -1,0 +1,49 @@
+NAME
+    Catalyst::Model::Jifty::DBI - A Catalyst interface to the Jifty db layer
+
+SYNOPSIS
+      $c->model('Jifty')->class('User')->load_by_cols(id=>1);
+      # or if you specify config->{records} as an arrayref of names
+      $c->model('Jifty::User')->load_by_cols(id=>1);
+
+DESCRIPTION
+    This is a simple interface to the Jifty::DBI module. It's a convenient
+    way to use it from your Catalyst Application.
+
+CONFIG
+  schema_base
+    The namespace to look for record definitions in. the record method uses
+    this to find your module.
+
+  db
+    This should be a hashref taking connection parameters. See the
+    Jifty::DBI::Handle documentation for more information about the
+    parameters it takes.
+
+METHODS
+  new
+    Constructor. Sets up your Catalyst Model class and creates the handle.
+
+  record
+    Accessor to get a handle on your jifty record. Takes a record name, and
+    creates a new instance of it based on the schema_base and the handle.
+
+  handle
+    This represents your Jifty::DBI::Handle instance. You can use it
+    directly, or get it passed to your jifty record by using the "class"
+    method.
+
+SEE ALSO
+    Catalyst
+
+    Catalyst::Model
+
+    Jifty::DBI
+
+AUTHOR
+    Marcus Ramberg, <mramberg@cpan.org>
+
+LICENSE
+    This program is free software, you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
