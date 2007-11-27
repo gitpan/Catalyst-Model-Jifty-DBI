@@ -3,77 +3,100 @@ package Catalyst::Helper::Model::Jifty::DBI;
 use strict;
 use warnings;
 use Carp;
-use UNIVERSAL::require;
+use FindBin;
+use File::Spec;
+use File::Basename;
 
 =head1 NAME
 
-Catalyst::Helper::Model::Jifty::DBI- Helper for Jifty::DBI Models
+Catalyst::Helper::Model::Jifty::DBI
 
 =head1 SYNOPSIS
 
-  script/create.pl model ModelName Jifty::DBI My::SchemaClass [ connect_info arguments ]
+  # to create a Catalyst::Model::Jifty::DBI class
+  script/app_create.pl model ModelName Jifty::DBI
+
+  # or, if you really want to hard-code your configuration
+  script/app_create.pl model ModelName Jifty::DBI Schema::Base database test.db ...
+
+  # to create a JDBI::Record/Collection classes under the Model
+  script/create.pl model ModelName::RecordName Jifty::DBI
+
+=head1 BACKWARD INCOMPATIBILITY
+
+Current version of Catalyst::(Helper::)Model::Jifty::DBI was once called Catalyst::(Helper::)Model::JDBI::Schemas, which then replaced the original version written by Marcus Ramberg, by the request of Matt S. Trout (Catalyst Core team) to avoid future confusion. I wonder if anyone used the previous one, but note that APIs have been revamped and backward incompatible since 0.03.
 
 =head1 DESCRIPTION
 
-Helper for the Jifty::DBI Models.
+This helper helps you to create a C::M::Jifty::DBI Model class, and optionally, Jifty::DBI::Record/Collection classes under the Model.
 
-=head2 Arguments:
+Model class will be created when you run it for the first time. Specify your CatalystApp::Model::Name's basename ("Name" for this case), then, this helper's name (Jifty::DBI).
 
-    ModelName is the short name for the Model class being generated
+If you really want to specify schema_base for the model (which is equal to the Model class by default), append that Schema::Base::Name, and the key/value pairs of connect_info hash, too. However, I recommend to use ConfigLoader to avoid hard-coded configuration.
 
-    My::SchemaClass is the fully qualified classname of your Schema,
-      which might or might not yet exist.
+When you set up a Model class, you can create Record/Collection classes. Specify ModelName::RecordName (or Schema::Base::Name), and helper's name. Note that Collection class is created automatically. You don't need to (actually, you shouldn't) specify Collection class name, which is confusing.
 
-    connect_info arguments are the same as what L<Jifty::DBI::Handle>
-    expects. just separate it with spaces rather than commas. for 
-    instance:
+=head1 METHODS
 
-    driver Pg database test host reason user twit password blah
+=head2 mk_compclass
 
-=head2 METHODS
-
-=head3 mk_compclass
+creates actual Model/Record/Collection classes.
 
 =cut
 
 sub mk_compclass {
-    my ( $self, $helper, $schema_class, %connect_info) = @_;
+  my $self   = shift;
+  my $helper = shift;
 
-    $helper->{schema_class} = $schema_class
-        or die "Must supply schema class name";
+  my $class = $helper->{class};
+  my ($parent) = $class =~ /^(.+)::\w+$/;
 
-    if(%connect_info) {
-        $helper->{setup_connect_info} = 1;
-        my %helper_connect_info = %connect_info;
-        for(keys %helper_connect_info) {
-	    my $val=$helper_connect_info{$_};
-            $helper_connect_info{$_} = qq{'$val'} if $val !~ /^\s*[[{]/;
-        }
-        $helper->{connect_info} = \%helper_connect_info;
-    }
+  my $parent_pm = dirname( $parent ).'.pm';
 
+  if ( -f $parent_pm && $parent !~ /::M(?:odel)$/i ) {
+    # probably this is a subclass, ie. record/collection class
 
-    my $file = $helper->{file};
-    $helper->render_file( 'compclass', $file );
+    my $record_file = $helper->{file};
+
+    croak "Probably you are going to create a Record class, ".
+          "but your Record class has 'Collection' in the name. ".
+          "It's confusing. Please use other name."
+          if $record_file =~ /Collection\.pm$/i;
+
+    $helper->render_file( 'recordclass', $record_file );
+
+    my $collection_file = $record_file;
+       $collection_file =~ s/\.pm$/Collection.pm/;
+
+    $helper->render_file( 'collectionclass', $collection_file );
+  }
+  else {
+    # this should be the main model class
+
+    $helper->{schema_base} = shift || $helper->{class};
+
+    my %connect_info = ( @_ && ( @_ % 2 ) == 0 ) ? @_ : ();
+
+    $connect_info{database} ||= lc $helper->{prefix}.'.db';
+    $connect_info{driver}   ||= 'SQLite';
+    $connect_info{host}     ||= 'localhost';
+
+    $helper->{connect_info} = \%connect_info;
+
+    $helper->render_file( 'schemaclass', $helper->{file} );
+  }
 }
-
-=head1 SEE ALSO
-
-General Catalyst Stuff:
-
-L<Catalyst::Manual>, L<Catalyst::Test>, L<Catalyst::Request>,
-L<Catalyst::Response>, L<Catalyst::Helper>, L<Catalyst>,
-
-L<Jifty::DBI>
 
 =head1 AUTHOR
 
-Marcus Ramberg, C<mramberg@cpan.org>
+Kenichi Ishigaki, E<lt>ishigaki@cpan.orgE<gt>
 
-=head1 LICENSE
+=head1 COPYRIGHT AND LICENSE
 
-This library is free software, you can redistribute it and/or modify
-it under the same terms as Perl itself.
+Copyright (C) 2007 by Kenichi Ishigaki.
+
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 
 =cut
 
@@ -83,31 +106,54 @@ __DATA__
 
 =begin pod_to_ignore
 
-__compclass__
-package [% class %];
+__schemaclass__
+package [% class %]
 
 use strict;
+use warnings;
 use base 'Catalyst::Model::Jifty::DBI';
 
-__PACKAGE__->config(
-    schema => '[% schema_class %]',
-    [% IF setup_connect_info %]connect_info => {
-        [% FOREACH key = connect_info.keys %]
-	[%key%] => [% connect_info.$key %],
-        [% END %]
-    },[% END %]
-);
+#### You can hard-code your configuration here,
+#### but you may want to use ConfigLoader
+#### to move configuration into config.yaml.
+#
+#__PACKAGE__->config({
+#    schema_base  => [% schema_base %],
+#    connect_info => {
+#        database => '[% connect_info.database %]',
+#        driver   => '[% connect_info.driver %]',
+#        host     => '[% connect_info.host %]',
+#        user     => '[% connect_info.user %]',
+#        password => '[% connect_info.password %]',
+#    },
+#
+#### You may want to use this instead of above connect_info
+#### when you want to use multiple databases.
+#
+#    databases => [
+#        {
+#            name => '[% connect_info.database %]',
+#            connect_info => {
+#                database => '[% connect_info.database %]',
+#                driver   => '[% connect_info.driver %]',
+#                host     => '[% connect_info.host %]',
+#                user     => '[% connect_info.user %]',
+#                password => '[% connect_info.password %]',
+#        },
+#    ],
+#});
 
 =head1 NAME
 
 [% class %] - Catalyst Jifty::DBI Model
+
 =head1 SYNOPSIS
 
 See L<[% app %]>
 
 =head1 DESCRIPTION
 
-L<Catalyst::Model::Jifty::DBI> Model using schema L<[% schema_class %]>
+L<Catalyst::Model::Jifty::DBI> Model using schemas under L<[% schema_base %]>.
 
 =head1 AUTHOR
 
@@ -115,8 +161,83 @@ L<Catalyst::Model::Jifty::DBI> Model using schema L<[% schema_class %]>
 
 =head1 LICENSE
 
-This library is free software, you can redistribute it and/or modify
-it under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=cut
+
+1;
+__recordclass__
+package [% class %];
+
+use strict;
+use warnings;
+use Jifty::DBI::Schema;
+use Jifty::DBI::Record schema {
+
+# write your schema here like this:
+#
+#   column "user_id" => type is "integer", is mandatory;
+#   column "text"    => type is "text";
+#
+# See Jifty/Jifty::DBI's documents/sources/tests for details.
+#
+# Note that you don't have to provide primary key,
+# which would be created by Jifty::DBI automatically.
+
+};
+
+=head1 NAME
+
+[% class %] - Catalyst JDBI Schema/Record
+
+=head1 SYNOPSIS
+
+See L<[% app %]>
+
+=head1 DESCRIPTION
+
+A Record/Schema class for L<Catalyst::Model::Jifty::DBI> Model.
+
+=head1 AUTHOR
+
+[% author %]
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=cut
+
+1;
+__collectionclass__
+package [% class %]Collection;
+
+use strict;
+use warnings;
+use base 'Jifty::DBI::Collection';
+
+=head1 NAME
+
+[% class %]Collection - Catalyst JDBI Collection
+
+=head1 SYNOPSIS
+
+See L<[% app %]>
+
+=head1 DESCRIPTION
+
+A Collection class for L<Catalyst::Model::Jifty::DBI> Model.
+
+=head1 AUTHOR
+
+[% author %]
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 
 =cut
 

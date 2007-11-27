@@ -1,21 +1,21 @@
 Changes
-inc/Module/AutoInstall.pm
-inc/Module/Install.pm
-inc/Module/Install/AutoInstall.pm
-inc/Module/Install/Base.pm
-inc/Module/Install/Can.pm
-inc/Module/Install/Fetch.pm
-inc/Module/Install/Include.pm
-inc/Module/Install/Makefile.pm
-inc/Module/Install/Metadata.pm
-inc/Module/Install/Win32.pm
-inc/Module/Install/WriteAll.pm
 lib/Catalyst/Helper/Model/Jifty/DBI.pm
 lib/Catalyst/Model/Jifty/DBI.pm
 Makefile.PL
 MANIFEST			This list of files
-META.yml
 README
-t/01use.t
-t/02pod.t
-t/03podcoverage.t
+t/00_load.t
+t/10_testapp.t
+t/99_pod.t
+t/99_podcoverage.t
+t/TestApp/lib/TestApp.pm
+t/TestApp/lib/TestApp/Controller/Multi.pm
+t/TestApp/lib/TestApp/Controller/Single.pm
+t/TestApp/lib/TestApp/Model/JDBI.pm
+t/TestApp/lib/TestApp/Model/JDBI_M.pm
+t/TestApp/lib/TestApp/Plugin/ErrorMessage.pm
+t/TestApp/lib/TestApp/Schema/Author.pm
+t/TestApp/lib/TestApp/Schema/Book.pm
+t/TestApp/lib/TestApp/Schema/BookCollection.pm
+t/TestApp/Makefile.PL
+META.yml                                 Module meta-data (added by MakeMaker)
