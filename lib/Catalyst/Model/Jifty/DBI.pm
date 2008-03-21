@@ -5,7 +5,7 @@ use warnings;
 use Carp;
 use base qw( Catalyst::Model Class::Accessor::Fast );
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use NEXT;
 use UNIVERSAL::require;
@@ -206,6 +206,25 @@ sub rollback          { shift->handle( @_ )->rollback }
 sub simple_query      { shift->handle->simple_query( @_ ) }
 sub fetch_result      { shift->handle->fetch_result( @_ ) }
 
+sub trace {
+  my ($self, $code) = @_;
+
+  if ( ref $code eq 'CODE' ) {
+    $self->handle->log_sql_statements(1);
+    $self->handle->log_sql_hook( trace => $code );
+  }
+  elsif ( $code ) {
+    require Data::Dump;
+    $self->handle->log_sql_statements(1);
+    $self->handle->log_sql_hook(
+      trace => sub { print STDERR Data::Dump::dump(@_) }
+    );
+  }
+  else {
+    $self->handle->log_sql_statements(0);
+  }
+}
+
 1;
 
 __END__
@@ -306,6 +325,11 @@ You want more? or you don't want any more magic?
   my $sth = $c->model('JDBI')
               ->simple_query( $sql_statement, @binds );
 
+When you want to debug (against the default handle):
+
+  $c->model('JDBI')->trace(1);  # start logging
+  $c->model('JDBI')->trace(0);  # stop logging
+
 =head1 BACKWARD INCOMPATIBILITY
 
 Current version of Catalyst::Model::Jifty::DBI was once called Catalyst::Model::JDBI::Schemas, which then replaced the original version written by Marcus Ramberg, by the request of Matt S. Trout (Catalyst Core team) to avoid future confusion. I wonder if anyone used the previous one, but note that APIs have been revamped and backward incompatible since 0.03.
@@ -334,7 +358,7 @@ You may want to use multiple databases (for log rotation, load balancing etc). I
 
 =head2 new
 
-creates a model. Database connection may be or not be prepared, according to the number of connect_info. See above for the configuration.
+creates a model. Database connection may or may not be prepared, according to the number of connect_info. See above for the configuration.
 
 =head2 record
 
@@ -364,7 +388,7 @@ You can omit "->record" when you fetch from a default database.
 
 =head2 collection
 
-creates and returns a corresponding (new) Jifty::DBI::Collection object. If you haven't created a Collection class but only a Schema/Record class, this model creates a plain Collection class on the fly. I recommend not to omit the obvious 'Collection' part of the class name, but if you prefer, you can spare that part when you explicitly call model("Model")->collection("Schema") (you can't omit if you follow the model("Model::Schema") convention). Other general usage and caveats are the same as ->record.
+creates and returns a corresponding (new) Jifty::DBI::Collection object. If you haven't created a Collection class but only a Schema/Record class, this model creates a plain Collection class on the fly. I recommend not to omit the obvious 'Collection' part of the class name, but if you prefer, you can spare that when you explicitly call model("Model")->collection("Schema") (you can't omit if you follow the model("Model::Schema") convention). Other general usage and caveats are the same as ->record.
 
   # this works.
   my $collection = $c->model('JDBI')->collection('BookCollection');
@@ -463,6 +487,17 @@ These three are shortcuts to ->handle->(method_name). You can pass an optional h
 =head2 disconnect
 
 This also is a shortcut to ->handle->disconnect. You can pass an optional hash to specify target database.
+
+=head2 trace
+
+turns on and off the logging of sql statements. If this is set to true, C::M::Jifty::DBI spits the info to STDERR. If you want finer control, give it a code reference.
+
+  $c->model('JDBI')->trace(sub {
+    my ($time, $statement, $binding, $duration, $result) = @_;
+    warn $statement, "\n", @$binding;
+  });
+
+See L<Jifty::DBI::Handle> for details (log_sql_hook / sql_statement_log).
 
 =head1 SEE ALSO
 

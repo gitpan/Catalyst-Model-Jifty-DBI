@@ -1,5 +1,9 @@
 Revision history for Catalyst-Model-Jifty-DBI
 
+0.04 2008/03/21
+  - bumped up the version requirement of Test::UseAllModules to 0.09
+  - added ->trace method
+
 0.03 2007/11/27
   - *** INCOMPATIBLE API CHANGE ***
   - By the request of Matt S. Trout, ISHIGAKI took over this
