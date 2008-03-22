@@ -5,7 +5,7 @@ use warnings;
 use Carp;
 use base qw( Catalyst::Model Class::Accessor::Fast );
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use NEXT;
 use UNIVERSAL::require;
@@ -54,10 +54,38 @@ sub new {
 
   no strict 'refs';
   my $schema_base = $self->schema_base;
-  foreach my $moniker ( findsubmod $schema_base ) {
-    next if $moniker =~ /Collection$/;
-    $moniker =~ s/^$schema_base\:://;
 
+  # prepare implicit collections before loading any records.
+  # so as not for JDBI to fail to create relationships.
+  my %collections;
+  my @monikers = findsubmod $schema_base;
+  foreach my $moniker ( @monikers ) {
+    if ( $moniker =~ /Collection$/ ) {
+      $collections{$moniker} = 1;
+    }
+    else {
+      $collections{$moniker.'Collection'} = 0;
+    }
+  }
+  foreach my $moniker ( keys %collections ) {
+    next if $collections{$moniker};
+    # perhaps you're too lazy to create Collection class.
+    # now we should try creating default one!
+    my $package_body = <<"EOT";
+package $moniker;
+use strict;
+use base qw( Jifty::DBI::Collection );
+1;
+EOT
+      eval $package_body;
+      croak "Can't prepare $moniker: $@" if $@;
+  }
+
+  foreach my $moniker ( @monikers ) {
+    $moniker->require or croak $@;
+    next if $moniker =~ /Collection$/;
+
+    $moniker =~ s/^$schema_base\:://;
     *{"${class}::${moniker}::ACCEPT_CONTEXT"} = sub {
       shift;
       shift->model( $model_name )->record( $moniker );
@@ -170,7 +198,6 @@ sub record {
   my $handle = $self->handle( %options );
 
   my $package = $self->schema_base.'::'.$moniker;
-     $package->require or croak "Can't load $package: $@";
      $package->new( handle => $handle );
 }
 
@@ -183,19 +210,6 @@ sub collection {
   $moniker .= 'Collection' unless $moniker =~ /Collection$/;
 
   my $package = $self->schema_base.'::'.$moniker;
-     $package->require;
-  if ($@) {
-    # perhaps you're too lazy to create Collection class.
-    # now we should try creating default one!
-    my $package_body = <<"EOT";
-package $package;
-use strict;
-use base qw( Jifty::DBI::Collection );
-1;
-EOT
-    eval $package_body;
-    croak "Can't load $package: $@" if $@;
-  }
   $package->new( handle => $handle );
 }
 

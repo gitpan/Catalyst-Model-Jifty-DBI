@@ -1,5 +1,9 @@
 Revision history for Catalyst-Model-Jifty-DBI
 
+0.05 2008/03/22
+  - prepare implicit Collections before loading any Records
+    so as not for JDBI to fail to create relationships
+
 0.04 2008/03/21
   - bumped up the version requirement of Test::UseAllModules to 0.09
   - added ->trace method

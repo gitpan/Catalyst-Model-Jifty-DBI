@@ -14,45 +14,39 @@ sub setup : Local {
   }
 
   # insert default data
-  my $book1 = $c->model('JDBI_M')->record('Book', name => 'db1' );
-     $book1->create(
-       name => 'Perl Best Practices',
-       isbn => '0-596-00173-8',
-     );
-     $book1->create(
-       name => 'Perl Hacks',
-       isbn => '0-596-52674-1',
-     );
+  $c->model('JDBI_M')->record('Author', from => 'db1')->create(
+    name    => 'Damian Conway',
+    pauseid => 'DCONWAY',
+  );
+  $c->model('JDBI_M')->record('Author', from => 'db1')->create(
+    name    => 'chromatic',
+    pauseid => 'CHROMATIC',
+  );
+  $c->model('JDBI_M')->record('Author', from => 'db2')->create(
+    name    => 'Jonathan Rockway',
+    pauseid => 'JROCKWAY',
+  );
+  $c->model('JDBI_M')->record('Author', from => 'db2')->create(
+    name    => 'Mark Jason Dominus',
+    pauseid => 'MJD',
+  );
 
-  my $author1 = $c->model('JDBI_M')->record('Author', name => 'db1' );
-     $author1->create(
-       name    => 'Damian Conway',
-       pauseid => 'DCONWAY',
-     );
-     $author1->create(
-       name    => 'chromatic',
-       pauseid => 'CHROMATIC',
-     );
-
-  my $book2 = $c->model('JDBI_M')->record('Book', name => 'db2' );
-     $book2->create(
-       name => 'Catalyst',
-       isbn => '1-84719-095-2',
-     );
-     $book2->create(
-       name => 'Higher Order Perl',
-       isbn => '1-55860-701-3',
-     );
-
-  my $author2 = $c->model('JDBI_M')->record('Author', name => 'db2' );
-     $author2->create(
-       name    => 'Jonathan Rockway',
-       pauseid => 'JROCKWAY',
-     );
-     $author2->create(
-       name    => 'Mark Jason Dominus',
-       pauseid => 'MJD',
-     );
+  $c->model('JDBI_M')->record('Book', from => 'db1')->create(
+    name => 'Perl Best Practices',
+    isbn => '0-596-00173-8',
+  );
+  $c->model('JDBI_M')->record('Book', from => 'db1')->create(
+    name => 'Perl Hacks',
+    isbn => '0-596-52674-1',
+  );
+  $c->model('JDBI_M')->record('Book', from => 'db2')->create(
+    name => 'Catalyst',
+    isbn => '1-84719-095-2',
+  );
+  $c->model('JDBI_M')->record('Book', from => 'db2')->create(
+    name => 'Higher Order Perl',
+    isbn => '1-55860-701-3',
+  );
 
   $c->response->body( 1 );
 }

@@ -12,25 +12,23 @@ sub setup : Local {
   $c->model('JDBI')->setup_database;
 
   # insert default data
-  my $book = $c->model('JDBI::Book');
-     $book->create(
-       name => 'Perl Best Practices',
-       isbn => '0-596-00173-8',
-     );
-     $book->create(
-       name => 'Perl Hacks',
-       isbn => '0-596-52674-1',
-     );
+  $c->model('JDBI::Book')->create(
+    name => 'Perl Best Practices',
+    isbn => '0-596-00173-8',
+  );
+  $c->model('JDBI::Book')->create(
+    name => 'Perl Hacks',
+    isbn => '0-596-52674-1',
+  );
 
-  my $author = $c->model('JDBI::Author');
-     $author->create(
-       name    => 'Damian Conway',
-       pauseid => 'DCONWAY',
-     );
-     $author->create(
-       name    => 'chromatic',
-       pauseid => 'CHROMATIC',
-     );
+  $c->model('JDBI::Author')->create(
+    name    => 'Damian Conway',
+    pauseid => 'DCONWAY',
+  );
+  $c->model('JDBI::Author')->create(
+    name    => 'chromatic',
+    pauseid => 'CHROMATIC',
+  );
 
   $c->response->body( 1 );
 }
