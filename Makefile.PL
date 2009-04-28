@@ -10,13 +10,14 @@ WriteMakefile(
     PREREQ_PM => {
         'Catalyst::Runtime'     => 0,
         'Class::Accessor::Fast' => 0,
+        'Data::Dump'            => 0,
+        'DBD::SQLite'           => '1.25',
         'File::Spec'            => 0,
         'File::Basename'        => 0,
-        'Jifty::DBI'            => 0.47,
+        'Jifty::DBI'            => '0.47',
         'Module::Find'          => 0,
-        'NEXT'                  => 0,
-        'Test::UseAllModules'   => 0.09,
-        'UNIVERSAL::require'    => 0.11,
+        'MRO::Compat'           => 0,
+        'Test::UseAllModules'   => '0.09',
     },
     ($ExtUtils::MakeMaker::VERSION >= 6.31
         ? ( LICENSE => 'perl' )

@@ -6,8 +6,11 @@ MANIFEST			This list of files
 README
 t/00_load.t
 t/10_testapp.t
+t/11_testapp_memory.t
 t/20_trace.t
+t/21_trace_memory.t
 t/30_references.t
+t/31_references_memory.t
 t/99_pod.t
 t/99_podcoverage.t
 t/TestApp/lib/TestApp.pm

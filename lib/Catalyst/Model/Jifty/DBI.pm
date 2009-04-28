@@ -5,17 +5,17 @@ use warnings;
 use Carp;
 use base qw( Catalyst::Model Class::Accessor::Fast );
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
-use NEXT;
-use UNIVERSAL::require;
+use MRO::Compat;
+use mro 'c3';
 use Jifty::DBI::Handle;
 use Module::Find;
 
 __PACKAGE__->mk_accessors(qw( handles connect_infos schema_base ));
 
 sub new {
-  my $self = shift->NEXT::new(@_);
+  my $self = shift->next::method(@_);
 
   my $class = ref $self;
   my $model_name = $class;
@@ -82,7 +82,7 @@ EOT
   }
 
   foreach my $moniker ( @monikers ) {
-    $moniker->require or croak $@;
+    eval "require $moniker" or croak $@;
     next if $moniker =~ /Collection$/;
 
     $moniker =~ s/^$schema_base\:://;
@@ -162,7 +162,10 @@ sub database {
   my $name = $self->_select_name(%options);
 
   if ( $self->connect_infos->{$name} ) {
-    return $self->connect_infos->{$name}->{database};
+    my $database = $self->connect_infos->{$name}->{database};
+    return '' if $self->connect_infos->{$name}->{driver} eq 'SQLite'
+              && $database eq ':memory:';
+    return $database;
   }
   else {
     croak "database $name doesn't exist";
@@ -183,7 +186,7 @@ sub setup_database {
   my $generator = Jifty::DBI::SchemaGenerator->new( $handle );
 
   foreach my $schema ( findsubmod $self->schema_base ) {
-    $schema->require or croak "Can't load $schema: $@";
+    eval "require $schema" or croak "Can't load $schema: $@";
     $generator->add_model( $schema );
   }
   my @statements = $generator->create_table_sql_statements;
@@ -324,7 +327,7 @@ If you want some partitioning:
 You can also setup a database:
 
   my $database = $c->model('JDBI')->database;
-  if ( -f $database ) {
+  if ( $database && -f $database ) {
     $c->model('JDBI')->disconnect;
     unlink $database;
   }
@@ -483,6 +486,8 @@ returns all the database names/aliases registered in the config.
 returns a database name (or an actual path to the database for SQLite). See above for an example. You can pass an optional hash to specify database alias explicitly.
 
   $c->model('JDBI')->database( name => 'alias' );
+
+As of 0.06, this returns a blank string if the driver is SQLite and the atabase is ":memory:", which means the whole database is on the memory, and there's no real file to operate.
 
 =head2 setup_database
 

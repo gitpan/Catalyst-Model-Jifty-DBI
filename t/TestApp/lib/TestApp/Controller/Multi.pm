@@ -57,7 +57,7 @@ sub cleanup : Local {
   foreach my $name ( $c->model('JDBI_M')->databases ) {
     my $testdb = $c->model('JDBI_M')->database( name => $name );
 
-    return unless -e $testdb;
+    return unless $testdb && -e $testdb;
 
     # to avoid Permission issue on some platforms
     $c->model('JDBI_M')->disconnect( name => $name );

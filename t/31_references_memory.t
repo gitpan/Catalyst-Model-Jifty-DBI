@@ -2,6 +2,9 @@ use strict;
 use warnings;
 use Test::More 'no_plan';
 use lib qw( t/TestReference/lib );
+
+local $ENV{CM_JDBI_MEMORY} = 1;
+
 use TestReference::Model::JDBI;
 
 my $model = TestReference::Model::JDBI->new;

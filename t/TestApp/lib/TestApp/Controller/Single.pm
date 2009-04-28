@@ -38,7 +38,7 @@ sub cleanup : Local {
 
   my $testdb = $c->model('JDBI')->database;
 
-  return unless -e $testdb;
+  return unless $testdb && -e $testdb;
 
   # to avoid Permission issue on some platforms
   $c->model('JDBI')->disconnect;

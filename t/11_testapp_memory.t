@@ -3,6 +3,8 @@ use warnings;
 use Test::More;
 use lib qw( t/TestApp/lib );
 
+local $ENV{CM_JDBI_MEMORY} = 1;
+
 use Catalyst::Test qw( TestApp );
 
 my @tests_1 = (

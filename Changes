@@ -1,5 +1,9 @@
 Revision history for Catalyst-Model-Jifty-DBI
 
+0.06 2009/04/28
+  - switched from NEXT to MRO::Compat
+  - removed UNIVERSAL::require dependency
+
 0.05 2008/03/22
   - prepare implicit Collections before loading any Records
     so as not for JDBI to fail to create relationships

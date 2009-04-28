@@ -12,6 +12,8 @@ BEGIN {
 
 plan tests => 4;
 
+local $ENV{CM_JDBI_MEMORY} = 1;
+
 use TestApp::Model::JDBI;
 
 my $model   = TestApp::Model::JDBI->new;
